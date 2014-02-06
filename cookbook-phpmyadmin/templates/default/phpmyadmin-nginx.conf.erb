@@ -1,0 +1,28 @@
+ server {
+   listen <%= node[:phpmyadmin][:port] %>;
+   server_name <%= node[:phpmyadmin][:server_name] %>;
+   access_log <%= node[:phpmyadmin][:log_dir] %>/nginx.access.log;
+   error_log <%= node[:phpmyadmin][:log_dir] %>/nginx.error.log;
+   <% if node[:phpmyadmin][:use_ssl] %>
+   ssl on;
+   ssl_certificate <%= node[:phpmyadmin][:ssl_certificate] %>;
+   ssl_certificate_key <%= node[:phpmyadmin][:ssl_certificate_key] %>;
+   <% end %>
+   
+   location / {
+     root /usr/share/phpmyadmin;
+     index index.html index.htm index.php;
+     <% if node[:phpmyadmin][:htpasswd][:username] %>
+     auth_basic "Restricted";
+     auth_basic_user_file phpmyadmin-htpasswd;
+     <% end %>
+   }
+   
+   location ~ \.php$ {
+     root /usr/share/phpmyadmin;
+     fastcgi_pass unix:/var/run/php-fpm-phpmyadmin.sock;
+     fastcgi_index index.php;
+     fastcgi_param SCRIPT_FILENAME  /usr/share/phpmyadmin/$fastcgi_script_name;
+     include fastcgi_params;
+   }
+ }
